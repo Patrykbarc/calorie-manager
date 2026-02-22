@@ -27,6 +27,7 @@ class CalorieManager:
 
         for meal in self.meals:
             nf = meal["nutrition_facts"]
+
             total["kcal"] += nf["kcal"]
             total["protein"] += nf["protein"]
             total["fat"] += nf["fat"]
@@ -42,21 +43,32 @@ def main():
     manager = CalorieManager()
 
     while True:
-        print("Licznik kalorii\n")
+        print("\nLicznik kalorii\n")
         print("1. Dodaj posiłek")
         print("2. Pokaż podsumowanie")
         print("3. Pokaż posiłki")
         print("4. Wyjście")
 
-        choice = input("Wybierz opcję: ")
+        choice = input("\nWybrano opcję: ")
 
         if choice == "1":
-            name = input("Nazwa posiłku: ")
+            name = input("Nazwa posiłku: ").strip()
+            if not name:
+                print("Błąd: nazwa posiłku nie może być pusta.")
+                continue
 
-            k = int(input("Kalorie: "))
-            p = int(input("Białko (g): "))
-            f = int(input("Tłuszcze (g): "))
-            c = int(input("Węglowodany (g): "))
+            try:
+                k = int(input("Kalorie: "))
+                p = int(input("Białko (g): "))
+                f = int(input("Tłuszcze (g): "))
+                c = int(input("Węglowodany (g): "))
+            except ValueError:
+                print("Błąd: podaj liczby całkowite dla wartości odżywczych.")
+                continue
+
+            if any(v < 0 for v in [k, p, f, c]):
+                print("Błąd: wartości odżywcze nie mogą być ujemne.")
+                continue
 
             new_meal: Meal = {
                 "name": name,
@@ -67,14 +79,28 @@ def main():
             print(f"Posiłek {new_meal['name']} został zapisany.\n")
 
         elif choice == "2":
-            total = manager.total_nutritions()
-            print(f"Podsumowanie: {total}")
+            if not manager.get_meals():
+                print("Brak posiłków do podsumowania.")
+                continue
+
+            tn = manager.total_nutritions()
+            print("\nPodsumowanie:")
+            print(f"  Kalorie:     {tn['kcal']} kcal")
+            print(f"  Białko:      {tn['protein']} g")
+            print(f"  Tłuszcze:    {tn['fat']} g")
+            print(f"  Węglowodany: {tn['carbs']} g")
 
         elif choice == "3":
             meals_list = manager.get_meals()
 
+            if not meals_list:
+                print("Brak dodanych posiłków.")
+                continue
+
+            print("\nDodane posiłki:")
             for meal in meals_list:
-                print(meal["name"])
+                nf = meal["nutrition_facts"]
+                print(f"  - {meal['name']} ({nf['kcal']} kcal)")
 
         elif choice == "4":
             print("Zamykanie programu...\n")
