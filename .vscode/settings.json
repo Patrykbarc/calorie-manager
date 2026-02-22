@@ -1,0 +1,21 @@
+{
+  "python-envs.defaultEnvManager": "ms-python.python:venv",
+  "python-envs.pythonProjects": [],
+
+  // Interpreter — wskazuje na lokalny .venv
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+
+  // Pylance — tryb sprawdzania typów
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+
+  // Ruff jako formatter i linter
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  }
+}
