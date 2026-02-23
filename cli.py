@@ -8,13 +8,15 @@ class CLI:
 
     def run(self) -> None:
         while True:
-            print("\nLicznik kalorii\n")
+            print("-----")
+            print("Licznik kalorii\n")
             print("1. Dodaj posiłek")
             print("2. Pokaż podsumowanie")
             print("3. Pokaż posiłki")
             print("4. Wyjście")
 
-            choice = input("\nWybrano opcję: ")
+            choice = input("\nWybierz opcję: ")
+            print("-----")
 
             if choice == "1":
                 self._handle_add_meal()
@@ -53,7 +55,12 @@ class CLI:
         }
 
         self.manager.add_meal(new_meal)
-        print(f"Posiłek {new_meal['name'].lower()} został zapisany.\n")
+
+        try:
+            self.manager.save_to_file()
+            print(f"Posiłek {new_meal['name'].lower()} został zapisany.\n")
+        except Exception as e:
+            print(f"Błąd podczas zapisywania danych: {e}")
 
     def _handle_show_summary(self) -> None:
         if not self.manager.get_meals():
