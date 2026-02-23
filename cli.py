@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from manager import CalorieManager
 from models import Meal
 
@@ -8,12 +10,14 @@ class CLI:
 
     def run(self) -> None:
         while True:
-            print("-----")
+            now = self._get_timestamp().strftime("%Y-%m-%d %H:%M:%S")
+
+            print(f"\n----- {now} -----\n")
             print("Licznik kalorii\n")
             print("1. Dodaj posiłek")
             print("2. Pokaż podsumowanie")
             print("3. Pokaż posiłki")
-            print("4. Wyjście")
+            print("\n4. Wyjście")
 
             choice = input("\nWybierz opcję: ")
             print("-----")
@@ -29,6 +33,9 @@ class CLI:
                 break
             else:
                 print("Niepoprawny wybór, spróbuj ponownie.")
+
+    def _get_timestamp(self) -> datetime:
+        return datetime.now()
 
     def _handle_add_meal(self) -> None:
         name = input("Nazwa posiłku: ").strip()
@@ -51,6 +58,7 @@ class CLI:
 
         new_meal: Meal = {
             "name": name,
+            "timestamp": self._get_timestamp().isoformat(),
             "nutrition_facts": {"kcal": k, "protein": p, "fat": f, "carbs": c},
         }
 

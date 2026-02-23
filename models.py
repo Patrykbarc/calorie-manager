@@ -10,4 +10,5 @@ class NutritionFacts(TypedDict):
 
 class Meal(TypedDict):
     name: str
+    timestamp: str
     nutrition_facts: NutritionFacts
