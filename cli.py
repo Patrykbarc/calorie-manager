@@ -12,16 +12,15 @@ class CLI:
         while True:
             now = self._get_timestamp().strftime("%Y-%m-%d %H:%M:%S")
 
-            print(f"\n----- {now} -----\n")
-            print("Licznik kalorii\n")
+            print(f"\n=== Licznik kalorii | {now} ===")
             print("1. Dodaj posiłek")
             print("2. Pokaż podsumowanie")
             print("3. Pokaż posiłki")
-            print("\n4. Wyjście")
+            print("4. Wyjście")
 
             choice = input("\nWybierz opcję: ")
-            print("-----")
 
+            print()
             if choice == "1":
                 self._handle_add_meal()
             elif choice == "2":
@@ -38,16 +37,35 @@ class CLI:
         return datetime.now()
 
     def _handle_add_meal(self) -> None:
+        print("(Zostaw pole puste i naciśnij Enter, aby anulować)\n")
+
         name = input("Nazwa posiłku: ").strip()
+
         if not name:
-            print("Błąd: nazwa posiłku nie może być pusta.")
+            print("Anulowano dodawanie posiłku.")
             return
 
+        meal_macro_prompts = {
+            "k": {"prompt": "Kalorie: "},
+            "p": {"prompt": "Białko (g): "},
+            "f": {"prompt": "Tłuszcze (g): "},
+            "c": {"prompt": "Węglowodany (g): "},
+        }
+
+        results = {}
+
         try:
-            k = int(input("Kalorie: "))
-            p = int(input("Białko (g): "))
-            f = int(input("Tłuszcze (g): "))
-            c = int(input("Węglowodany (g): "))
+            for key, info in meal_macro_prompts.items():
+                user_input = input(info["prompt"]).strip()
+
+                if not user_input:
+                    print("Anulowano dodawanie posiłku.")
+                    return
+
+                results[key] = int(user_input)
+
+            k, p, f, c = results["k"], results["p"], results["f"], results["c"]
+            print(f"\nZapisano: K:{k}, P:{p}, F:{f}, C:{c}")
         except ValueError:
             print("Błąd: podaj liczby całkowite dla wartości odżywczych.")
             return
