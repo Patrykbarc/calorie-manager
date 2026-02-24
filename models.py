@@ -3,9 +3,9 @@ from typing import TypedDict
 
 class NutritionFacts(TypedDict):
     kcal: int
-    protein: int
-    fat: int
-    carbs: int
+    protein: float
+    fat: float
+    carbs: float
 
 
 class Meal(TypedDict):

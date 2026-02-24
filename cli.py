@@ -16,22 +16,22 @@ class CLI:
             print("1. Dodaj posiłek")
             print("2. Pokaż podsumowanie")
             print("3. Pokaż posiłki")
-            print("4. Wyjście")
+            print("4. Zamknij program")
 
             choice = input("\nWybierz opcję: ")
 
-            print()
-            if choice == "1":
-                self._handle_add_meal()
-            elif choice == "2":
-                self._handle_show_summary()
-            elif choice == "3":
-                self._handle_show_meals()
-            elif choice == "4":
-                print("Zamykanie programu...\n")
-                break
-            else:
-                print("Niepoprawny wybór, spróbuj ponownie.")
+            match choice:
+                case "1":
+                    self._handle_add_meal()
+                case "2":
+                    self._handle_show_summary()
+                case "3":
+                    self._handle_show_meals()
+                case "4":
+                    print("Zamykanie programu...\n")
+                    break
+                case _:
+                    print("Niepoprawny wybór, spróbuj ponownie.")
 
     def _get_timestamp(self) -> datetime:
         return datetime.now()
@@ -52,17 +52,17 @@ class CLI:
             "c": {"prompt": "Węglowodany (g): "},
         }
 
-        results = {}
+        results: dict[str, float] = {}
 
         try:
             for key, info in meal_macro_prompts.items():
-                user_input = input(info["prompt"]).strip()
+                user_input = input(info["prompt"]).strip().replace(",", ".")
 
                 if not user_input:
                     print("Anulowano dodawanie posiłku.")
                     return
 
-                results[key] = int(user_input)
+                results[key] = float(user_input)
 
             k, p, f, c = results["k"], results["p"], results["f"], results["c"]
             print(f"\nZapisano: K:{k}, P:{p}, F:{f}, C:{c}")
@@ -77,7 +77,7 @@ class CLI:
         new_meal: Meal = {
             "name": name,
             "timestamp": self._get_timestamp().isoformat(),
-            "nutrition_facts": {"kcal": k, "protein": p, "fat": f, "carbs": c},
+            "nutrition_facts": {"kcal": int(k), "protein": p, "fat": f, "carbs": c},
         }
 
         self.manager.add_meal(new_meal)
