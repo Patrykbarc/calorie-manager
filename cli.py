@@ -1,12 +1,15 @@
 from datetime import datetime
 
+from constants.constants import MEALS_DATA_FILE_NAME
+from file_manager import FileManager
 from manager import CalorieManager
 from models import Meal
 
 
 class CLI:
-    def __init__(self, manager: CalorieManager) -> None:
+    def __init__(self, manager: CalorieManager, file_manager: FileManager) -> None:
         self.manager = manager
+        self.file_manager = file_manager
 
     def run(self) -> None:
         while True:
@@ -83,7 +86,9 @@ class CLI:
         self.manager.add_meal(new_meal)
 
         try:
-            self.manager.save_to_file()
+            self.file_manager.save_to_file(
+                MEALS_DATA_FILE_NAME, self.manager.get_meals()
+            )
             print(f"Posiłek {new_meal['name'].lower()} został zapisany.\n")
         except Exception as e:
             print(f"Błąd podczas zapisywania danych: {e}")
