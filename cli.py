@@ -1,15 +1,22 @@
 from datetime import datetime
 
+from calorie_manager import CalorieManager
 from constants.constants import MEALS_DATA_FILE_NAME
 from file_manager import FileManager
-from manager import CalorieManager
 from models import Meal
+from settings_manager import SettingsManager
 
 
 class CLI:
-    def __init__(self, manager: CalorieManager, file_manager: FileManager) -> None:
+    def __init__(
+        self,
+        manager: CalorieManager,
+        file_manager: FileManager,
+        settings_manager: SettingsManager,
+    ) -> None:
         self.manager = manager
         self.file_manager = file_manager
+        self.settings_manager = settings_manager
 
     def run(self) -> None:
         while True:
@@ -19,7 +26,8 @@ class CLI:
             print("1. Dodaj posiłek")
             print("2. Pokaż podsumowanie")
             print("3. Pokaż posiłki")
-            print("4. Zamknij program")
+            print("4. Pokaż ustawienia")
+            print("5. Zamknij program")
 
             choice = input("\nWybierz opcję: ")
 
@@ -31,6 +39,8 @@ class CLI:
                 case "3":
                     self._handle_show_meals()
                 case "4":
+                    self.settings_manager.get_user_settings()
+                case "5":
                     print("Zamykanie programu...\n")
                     break
                 case _:

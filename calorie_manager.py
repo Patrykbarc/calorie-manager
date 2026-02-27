@@ -8,8 +8,8 @@ from models import Meal, NutritionFacts
 class CalorieManager:
     meals: List[Meal]
 
-    def __init__(self) -> None:
-        file_manager = FileManager()
+    def __init__(self, file_manager: FileManager) -> None:
+        self.file_manager = file_manager
         self.meals = file_manager.read_file(MEALS_DATA_FILE_NAME) or []
 
     def add_meal(self, meal: Meal) -> None:
