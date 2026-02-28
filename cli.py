@@ -18,6 +18,8 @@ class CLI:
         self.file_manager = file_manager
         self.settings_manager = settings_manager
 
+        self._handle_user_settings()
+
     def run(self) -> None:
         while True:
             now = self._get_timestamp().strftime("%Y-%m-%d %H:%M:%S")
@@ -48,6 +50,14 @@ class CLI:
 
     def _get_timestamp(self) -> datetime:
         return datetime.now()
+
+    def _handle_user_settings(self) -> None:
+        user_settings = self.settings_manager.get_user_settings()
+
+        if user_settings is None:
+            self.settings_manager.run_user_settings_form()
+        else:
+            pass
 
     def _handle_add_meal(self) -> None:
         print("(Zostaw pole puste i naciśnij Enter, aby anulować)\n")

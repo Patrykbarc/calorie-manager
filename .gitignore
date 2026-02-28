@@ -208,3 +208,5 @@ __marimo__/
 
 .DS_Store
 data.json
+
+user_settings.json
