@@ -29,7 +29,8 @@ class CLI:
             print("2. Pokaż podsumowanie")
             print("3. Pokaż posiłki")
             print("4. Pokaż ustawienia")
-            print("5. Zamknij program")
+            print("5. Edytuj ustawienia")
+            print("6. Zamknij program")
 
             choice = input("\nWybierz opcję: ")
 
@@ -41,8 +42,10 @@ class CLI:
                 case "3":
                     self._handle_show_meals()
                 case "4":
-                    self.settings_manager.get_user_settings()
+                    self._handle_show_user_settings()
                 case "5":
+                    self._handle_update_settings()
+                case "6":
                     print("Zamykanie programu...\n")
                     break
                 case _:
@@ -58,6 +61,31 @@ class CLI:
             self.settings_manager.run_user_settings_form()
         else:
             pass
+
+    def _handle_show_user_settings(self):
+        user_settings = self.settings_manager.get_user_settings()
+
+        if user_settings:
+            print(
+                f"\nImię: {user_settings.name},\nKcal: {user_settings.calories_daily}"
+            )
+        else:
+            print(
+                "\nBrak zapisanych ustawień. Skonfiguruj swój profil, aby zobaczyć szczegóły."
+            )
+
+    def _handle_update_settings(self):
+        self.settings_manager.run_user_settings_form()
+        user_settings = self.settings_manager.get_user_settings()
+
+        if user_settings:
+            print(
+                f"\nPomyślnie zaktualizowano ustawienia.\nImię: {user_settings.name}\nKcal: {user_settings.calories_daily}"
+            )
+        else:
+            print(
+                "\nNie udało się zaktualizować ustawień. Proces został przerwany lub wystąpił błąd zapisu."
+            )
 
     def _handle_add_meal(self) -> None:
         print("(Zostaw pole puste i naciśnij Enter, aby anulować)\n")
@@ -126,13 +154,31 @@ class CLI:
         print(f"  Węglowodany: {tn['carbs']} g")
 
     def _handle_show_meals(self) -> None:
-        meals_list = self.manager.get_meals()
+        raw_meals_list = self.manager.get_meals()
+
+        meals_list = {}
+
+        for meal in raw_meals_list:
+            iso_timestamp = datetime.fromisoformat(meal["timestamp"])
+            timestamp = iso_timestamp.strftime("%Y-%m-%d")
+
+            if timestamp not in meals_list:
+                meals_list[timestamp] = []
+
+            meals_list[timestamp].append(
+                {
+                    "name": meal["name"],
+                    "nutrition_facts": meal["nutrition_facts"],
+                }
+            )
 
         if not meals_list:
             print("Brak dodanych posiłków.")
             return
 
         print("\nDodane posiłki:")
-        for meal in meals_list:
-            nf = meal["nutrition_facts"]
-            print(f"  - {meal['name']} ({nf['kcal']} kcal)")
+        for timestamp, values in meals_list.items():
+            print(f"\n{timestamp}")
+            for meal in values:
+                nf = meal["nutrition_facts"]
+                print(f"  - {meal['name']} ({nf['kcal']})")
