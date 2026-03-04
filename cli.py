@@ -178,7 +178,12 @@ class CLI:
 
         print("\nDodane posiłki:")
         for timestamp, values in meals_list.items():
-            print(f"\n{timestamp}")
+            print(f"\n{timestamp}:")
+
+            total_kcal = 0
             for meal in values:
                 nf = meal["nutrition_facts"]
-                print(f"  - {meal['name']} ({nf['kcal']})")
+                total_kcal += nf["kcal"]
+
+                print(f"  - {meal['name']} ({nf['kcal']} kcal)")
+            print(f"Suma: {total_kcal} kcal")
