@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from calorie_manager import CalorieManager
 from constants.constants import MEALS_DATA_FILE_NAME
@@ -30,7 +30,8 @@ class CLI:
             print("3. Pokaż posiłki")
             print("4. Pokaż ustawienia")
             print("5. Edytuj ustawienia")
-            print("6. Zamknij program")
+            print("6. Pokaż tygodniowe podsumowanie")
+            print("\n9. Zamknij program")
 
             choice = input("\nWybierz opcję: ")
 
@@ -46,6 +47,8 @@ class CLI:
                 case "5":
                     self._handle_update_settings()
                 case "6":
+                    self._handle_weekly_summary()
+                case "9":
                     print("Zamykanie programu...\n")
                     break
                 case _:
@@ -187,3 +190,40 @@ class CLI:
 
                 print(f"  - {meal['name']} ({nf['kcal']} kcal)")
             print(f"Suma: {total_kcal} kcal")
+
+    def _handle_weekly_summary(self):
+        meals = self.manager.get_meals()
+        raw_calories_daily = self.settings_manager.get_user_settings()
+
+        if not raw_calories_daily:
+            print("Cel dzienny nie został ustalony.")
+            return
+
+        calories_goal = raw_calories_daily.calories_daily
+
+        meals_list = {}
+        last_week = datetime.now() - timedelta(days=7)
+
+        for meal in meals:
+            iso_timestamp = datetime.fromisoformat(meal["timestamp"])
+            timestamp = iso_timestamp.strftime("%Y-%m-%d")
+            is_older_than_week = last_week >= iso_timestamp
+
+            kcal_value = meal["nutrition_facts"]["kcal"]
+
+            if is_older_than_week:
+                continue
+
+            if timestamp not in meals_list:
+                meals_list[timestamp] = {"kcal": 0, "difference": calories_goal}
+
+            meals_list[timestamp]["kcal"] += kcal_value
+            meals_list[timestamp]["difference"] -= kcal_value
+
+        print(f"Cel: {calories_goal} kcal")
+        for date, data in meals_list.items():
+            is_calories_within_goal = "✓" if data["difference"] >= 0 else "x"
+
+            print(
+                f"{date}  {is_calories_within_goal}  {data['kcal']} kcal  ({data['difference']})"
+            )
