@@ -1,23 +1,20 @@
 from datetime import datetime, timedelta
+from typing import List
 
-from calorie_manager import CalorieManager
-from constants.constants import MEALS_DATA_FILE_NAME
-from file_manager import FileManager
-from models import Meal
+import requests
+
+from models import Meal, NutritionFacts
 from settings_manager import SettingsManager
 
 
 class CLI:
+    API_BASE_PATH = "http://127.0.0.1:8000"
+
     def __init__(
         self,
-        calorie_manager: CalorieManager,
-        file_manager: FileManager,
         settings_manager: SettingsManager,
     ) -> None:
-        self.calorie_manager = calorie_manager
-        self.file_manager = file_manager
         self.settings_manager = settings_manager
-
         self._handle_user_settings()
 
     def run(self) -> None:
@@ -134,22 +131,26 @@ class CLI:
             "nutrition_facts": {"kcal": int(k), "protein": p, "fat": f, "carbs": c},
         }
 
-        self.calorie_manager.add_meal(new_meal)
-
         try:
-            self.file_manager.save_to_file(
-                MEALS_DATA_FILE_NAME, self.calorie_manager.get_meals()
-            )
+            requests.post(f"{self.API_BASE_PATH}/meals", json=new_meal).json()
+
             print(f"Posiłek {new_meal['name'].lower()} został zapisany.\n")
         except Exception as e:
             print(f"Błąd podczas zapisywania danych: {e}")
 
     def _handle_show_summary(self) -> None:
-        if not self.calorie_manager.get_meals():
+        meals: List[Meal] = requests.get(f"{self.API_BASE_PATH}/meals").json()
+
+        if not meals:
             print("Brak posiłków do podsumowania.")
             return
 
-        tn = self.calorie_manager.total_nutritions()
+        tn: NutritionFacts = requests.get(
+            f"{self.API_BASE_PATH}/meals/total-nutritions"
+        ).json()
+
+        print(tn)
+
         print("\nPodsumowanie:")
         print(f"  Kalorie:     {tn['kcal']} kcal")
         print(f"  Białko:      {tn['protein']} g")
@@ -157,7 +158,7 @@ class CLI:
         print(f"  Węglowodany: {tn['carbs']} g")
 
     def _handle_show_meals(self) -> None:
-        raw_meals_list = self.calorie_manager.get_meals()
+        raw_meals_list: List[Meal] = requests.get(f"{self.API_BASE_PATH}/meals").json()
 
         meals_list = {}
 
@@ -192,7 +193,7 @@ class CLI:
             print(f"Suma: {total_kcal} kcal")
 
     def _handle_weekly_summary(self):
-        meals = self.calorie_manager.get_meals()
+        meals: List[Meal] = requests.get(f"{self.API_BASE_PATH}/meals").json()
         raw_calories_daily = self.settings_manager.get_user_settings()
 
         if not raw_calories_daily:

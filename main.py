@@ -8,4 +8,4 @@ if __name__ == "__main__":
     settings_manager = SettingsManager(file_manager)
     calorie_manager = CalorieManager(file_manager)
 
-    CLI(calorie_manager, file_manager, settings_manager).run()
+    CLI(settings_manager).run()
