@@ -10,11 +10,11 @@ from settings_manager import SettingsManager
 class CLI:
     def __init__(
         self,
-        manager: CalorieManager,
+        calorie_manager: CalorieManager,
         file_manager: FileManager,
         settings_manager: SettingsManager,
     ) -> None:
-        self.manager = manager
+        self.calorie_manager = calorie_manager
         self.file_manager = file_manager
         self.settings_manager = settings_manager
 
@@ -134,22 +134,22 @@ class CLI:
             "nutrition_facts": {"kcal": int(k), "protein": p, "fat": f, "carbs": c},
         }
 
-        self.manager.add_meal(new_meal)
+        self.calorie_manager.add_meal(new_meal)
 
         try:
             self.file_manager.save_to_file(
-                MEALS_DATA_FILE_NAME, self.manager.get_meals()
+                MEALS_DATA_FILE_NAME, self.calorie_manager.get_meals()
             )
             print(f"Posiłek {new_meal['name'].lower()} został zapisany.\n")
         except Exception as e:
             print(f"Błąd podczas zapisywania danych: {e}")
 
     def _handle_show_summary(self) -> None:
-        if not self.manager.get_meals():
+        if not self.calorie_manager.get_meals():
             print("Brak posiłków do podsumowania.")
             return
 
-        tn = self.manager.total_nutritions()
+        tn = self.calorie_manager.total_nutritions()
         print("\nPodsumowanie:")
         print(f"  Kalorie:     {tn['kcal']} kcal")
         print(f"  Białko:      {tn['protein']} g")
@@ -157,7 +157,7 @@ class CLI:
         print(f"  Węglowodany: {tn['carbs']} g")
 
     def _handle_show_meals(self) -> None:
-        raw_meals_list = self.manager.get_meals()
+        raw_meals_list = self.calorie_manager.get_meals()
 
         meals_list = {}
 
@@ -192,7 +192,7 @@ class CLI:
             print(f"Suma: {total_kcal} kcal")
 
     def _handle_weekly_summary(self):
-        meals = self.manager.get_meals()
+        meals = self.calorie_manager.get_meals()
         raw_calories_daily = self.settings_manager.get_user_settings()
 
         if not raw_calories_daily:
