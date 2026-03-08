@@ -1,8 +1,10 @@
+.PHONY: server cli
+
 PYTHON = python3
 API_PATH = app/api/api.py
 
 server:
 	fastapi dev ${API_PATH}
 
-start:
+cli:
 	python3 main.py

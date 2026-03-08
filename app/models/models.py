@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class NutritionFacts(TypedDict):
@@ -9,6 +9,7 @@ class NutritionFacts(TypedDict):
 
 
 class Meal(TypedDict):
+    id: NotRequired[str]
     name: str
     timestamp: str
     nutrition_facts: NutritionFacts

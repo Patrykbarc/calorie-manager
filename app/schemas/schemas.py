@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -10,7 +8,11 @@ class NutritionFacts(BaseModel):
     carbs: float
 
 
-class Meal(BaseModel):
+class MealCreate(BaseModel):
     name: str
-    timestamp: Optional[str] = None
     nutrition_facts: NutritionFacts
+
+
+class MealResponse(MealCreate):
+    id: str
+    timestamp: str

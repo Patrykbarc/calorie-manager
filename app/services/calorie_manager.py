@@ -16,7 +16,7 @@ class CalorieManager:
     def add_meal(self, meal: Meal) -> None:
         self.meals.append(meal)
 
-    def total_nutritions(self) -> NutritionFacts:
+    def get_total_nutritions(self) -> NutritionFacts:
         total: NutritionFacts = {"kcal": 0, "carbs": 0, "fat": 0, "protein": 0}
 
         for meal in self.meals:
@@ -31,3 +31,7 @@ class CalorieManager:
 
     def get_meals(self) -> List[Meal]:
         return self.meals
+
+    def delete_meal(self, id: str) -> List[Meal] | None:
+        self.meals = [meal for meal in self.meals if meal.get("id") != id]
+        self.file_manager.save_to_file(MEALS_DATA_FILE_NAME, self.meals)

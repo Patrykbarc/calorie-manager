@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 import requests
+from fastapi import status
 
 from app.models import Meal, NutritionFacts
 from app.services import SettingsManager
@@ -23,11 +24,12 @@ class CLI:
 
             print(f"\n=== Licznik kalorii | {now} ===")
             print("1. Dodaj posiłek")
-            print("2. Pokaż podsumowanie")
-            print("3. Pokaż posiłki")
-            print("4. Pokaż ustawienia")
-            print("5. Edytuj ustawienia")
-            print("6. Pokaż tygodniowe podsumowanie")
+            print("2. Usuń posiłek")
+            print("3. Pokaż podsumowanie")
+            print("4. Pokaż posiłki")
+            print("5. Pokaż ustawienia")
+            print("6. Edytuj ustawienia")
+            print("7. Pokaż tygodniowe podsumowanie")
             print("\n9. Zamknij program")
 
             choice = input("\nWybierz opcję: ")
@@ -36,14 +38,16 @@ class CLI:
                 case "1":
                     self._handle_add_meal()
                 case "2":
-                    self._handle_show_summary()
+                    self._handle_delete_meal()
                 case "3":
-                    self._handle_show_meals()
+                    self._handle_show_summary()
                 case "4":
-                    self._handle_show_user_settings()
+                    self._handle_show_meals()
                 case "5":
-                    self._handle_update_settings()
+                    self._handle_show_user_settings()
                 case "6":
+                    self._handle_update_settings()
+                case "7":
                     self._handle_weekly_summary()
                 case "9":
                     print("Zamykanie programu...\n")
@@ -62,30 +66,8 @@ class CLI:
         else:
             pass
 
-    def _handle_show_user_settings(self):
-        user_settings = self.settings_manager.get_user_settings()
-
-        if user_settings:
-            print(
-                f"\nImię: {user_settings.name},\nKcal: {user_settings.calories_daily}"
-            )
-        else:
-            print(
-                "\nBrak zapisanych ustawień. Skonfiguruj swój profil, aby zobaczyć szczegóły."
-            )
-
-    def _handle_update_settings(self):
-        self.settings_manager.run_user_settings_form()
-        user_settings = self.settings_manager.get_user_settings()
-
-        if user_settings:
-            print(
-                f"\nPomyślnie zaktualizowano ustawienia.\nImię: {user_settings.name}\nKcal: {user_settings.calories_daily}"
-            )
-        else:
-            print(
-                "\nNie udało się zaktualizować ustawień. Proces został przerwany lub wystąpił błąd zapisu."
-            )
+    def _handle_get_meal_list(self) -> List[Meal]:
+        return requests.get(f"{self.API_BASE_PATH}/meals").json()
 
     def _handle_add_meal(self) -> None:
         print("(Zostaw pole puste i naciśnij Enter, aby anulować)\n")
@@ -138,8 +120,46 @@ class CLI:
         except Exception as e:
             print(f"Błąd podczas zapisywania danych: {e}")
 
+    def _handle_delete_meal(self) -> None:
+
+        while True:
+            raw_meals_list = self._handle_get_meal_list()
+
+            if not raw_meals_list:
+                print("Brak posiłków do usunięcia")
+                return
+
+            self._handle_show_meals()
+
+            choice = input(
+                '\nAby anulować naciśnij "Enter".'
+                "\nWpisz numer porządkowy do usunięcia: "
+            ).strip()
+
+            if not choice:
+                print("Anulowano usuwanie posiłku")
+                return
+
+            try:
+                idx = int(choice) - 1
+
+                if 0 <= idx < len(raw_meals_list):
+                    meal_to_delete = raw_meals_list[idx]
+                    meal_id = meal_to_delete.get("id")
+
+                    res = requests.delete(f"{self.API_BASE_PATH}/meals/{meal_id}")
+
+                    if res.status_code == status.HTTP_200_OK:
+                        print(f"\nPomyślnie usunięto posiłek: {meal_to_delete['name']}")
+                    else:
+                        print("Wystąpił błąd serwera podczas usuwania.")
+                else:
+                    print(f"Błąd: Wybierz numer z zakresu 1 - {len(raw_meals_list)}.")
+            except ValueError:
+                print("Błąd: To nie jest liczba. Podaj numer porządkowy (np. 1).")
+
     def _handle_show_summary(self) -> None:
-        meals: List[Meal] = requests.get(f"{self.API_BASE_PATH}/meals").json()
+        meals: List[Meal] = self._handle_get_meal_list()
 
         if not meals:
             print("Brak posiłków do podsumowania.")
@@ -158,7 +178,7 @@ class CLI:
         print(f"  Węglowodany: {tn['carbs']} g")
 
     def _handle_show_meals(self) -> None:
-        raw_meals_list: List[Meal] = requests.get(f"{self.API_BASE_PATH}/meals").json()
+        raw_meals_list: List[Meal] = self._handle_get_meal_list()
 
         meals_list = {}
 
@@ -180,20 +200,47 @@ class CLI:
             print("Brak dodanych posiłków.")
             return
 
+        idx = 0
         print("\nDodane posiłki:")
         for timestamp, values in meals_list.items():
             print(f"\n{timestamp}:")
 
             total_kcal = 0
             for meal in values:
+                idx += 1
                 nf = meal["nutrition_facts"]
                 total_kcal += nf["kcal"]
 
-                print(f"  - {meal['name']} ({nf['kcal']} kcal)")
+                print(f"[{idx}] {meal['name']} ({nf['kcal']} kcal)")
             print(f"Suma: {total_kcal} kcal")
 
+    def _handle_show_user_settings(self):
+        user_settings = self.settings_manager.get_user_settings()
+
+        if user_settings:
+            print(
+                f"\nImię: {user_settings.name},\nKcal: {user_settings.calories_daily}"
+            )
+        else:
+            print(
+                "\nBrak zapisanych ustawień. Skonfiguruj swój profil, aby zobaczyć szczegóły."
+            )
+
+    def _handle_update_settings(self):
+        self.settings_manager.run_user_settings_form()
+        user_settings = self.settings_manager.get_user_settings()
+
+        if user_settings:
+            print(
+                f"\nPomyślnie zaktualizowano ustawienia.\nImię: {user_settings.name}\nKcal: {user_settings.calories_daily}"
+            )
+        else:
+            print(
+                "\nNie udało się zaktualizować ustawień. Proces został przerwany lub wystąpił błąd zapisu."
+            )
+
     def _handle_weekly_summary(self):
-        meals: List[Meal] = requests.get(f"{self.API_BASE_PATH}/meals").json()
+        meals: List[Meal] = self._handle_get_meal_list()
         raw_calories_daily = self.settings_manager.get_user_settings()
 
         if not raw_calories_daily:

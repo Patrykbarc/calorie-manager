@@ -1,3 +1,3 @@
-from .schemas import Meal, NutritionFacts
+from .schemas import MealCreate, NutritionFacts
 
-__all__ = ["NutritionFacts", "Meal"]
+__all__ = ["NutritionFacts", "MealCreate"]

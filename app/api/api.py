@@ -1,12 +1,13 @@
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import cast
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 
 import app.models as models
 from app.core import MEALS_DATA_FILE_NAME
-from app.schemas import Meal
+from app.schemas import MealCreate
 from app.services import CalorieManager, FileManager
 
 
@@ -40,17 +41,19 @@ def get_meals(
         return manager.get_meals()
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Błąd podczas pobierania danych: {e}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Błąd podczas pobierania danych: {e}",
         )
 
 
 @api.post("/meals")
 def create_meal(
-    meal: Meal,
+    meal: MealCreate,
     calorie_manager: CalorieManager = Depends(get_calorie_manager),
     file_manager: FileManager = Depends(get_file_manager),
 ):
     meal_dict: models.Meal = {
+        "id": str(uuid.uuid4()),
         "name": meal.name,
         "timestamp": datetime.now().isoformat(),
         "nutrition_facts": cast(
@@ -64,7 +67,8 @@ def create_meal(
         return f'Posiłek "{meal.name}" został zapisany.\n'
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Błąd podczas zapisywania danych: {e}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Błąd podczas zapisywania danych: {e}",
         )
 
 
@@ -73,8 +77,25 @@ def get_total_nutritions(
     calorie_manager: CalorieManager = Depends(get_calorie_manager),
 ):
     try:
-        return calorie_manager.total_nutritions()
+        return calorie_manager.get_total_nutritions()
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Błąd podczas pobierania wartości odżywczych: {e}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Błąd podczas pobierania wartości odżywczych: {e}",
+        )
+
+
+@api.delete("/meals/{id}")
+def delete_meal(
+    id: str,
+    response: Response,
+    calorie_manager: CalorieManager = Depends(get_calorie_manager),
+):
+    try:
+        response.status_code = status.HTTP_200_OK
+        calorie_manager.delete_meal(id=id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Błąd podczas usuwania: {e}",
         )
