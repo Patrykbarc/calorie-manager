@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta
 from typing import List
 
@@ -17,6 +18,7 @@ class CLI:
     ) -> None:
         self.settings_manager = settings_manager
         self._handle_user_settings()
+        self._check_healthz()
 
     def run(self) -> None:
         while True:
@@ -54,6 +56,21 @@ class CLI:
                     break
                 case _:
                     print("Niepoprawny wybór, spróbuj ponownie.")
+
+    def _check_healthz(self):
+        try:
+            requests.get(f"{self.API_BASE_PATH}/healthz")
+        except requests.exceptions.ConnectionError:
+            print(
+                "Błąd: Nie można połączyć się z serwerem. Upewnij się, że serwer jest uruchomiony."
+            )
+            sys.exit(1)
+        except requests.exceptions.Timeout:
+            print("Błąd: Timeout połączenia z serwerem. Serwer nie odpowiada w czasie.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Błąd serwera: {e}")
+            sys.exit(1)
 
     def _get_timestamp(self) -> datetime:
         return datetime.now()

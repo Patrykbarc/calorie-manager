@@ -32,6 +32,13 @@ class CalorieManager:
     def get_meals(self) -> List[Meal]:
         return self.meals
 
-    def delete_meal(self, id: str) -> List[Meal] | None:
+    def delete_meal(self, id: str) -> Meal | None:
+        meal = next((meal for meal in self.meals if meal.get("id") == id), None)
+
+        if not meal:
+            return None
+
         self.meals = [meal for meal in self.meals if meal.get("id") != id]
         self.file_manager.save_to_file(MEALS_DATA_FILE_NAME, self.meals)
+
+        return meal

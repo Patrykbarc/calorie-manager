@@ -33,6 +33,11 @@ async def lifespan(app: FastAPI):
 api = FastAPI(lifespan=lifespan)
 
 
+@api.get("/healthz")
+def get_healthz(response: Response):
+    response.status_code = status.HTTP_200_OK
+
+
 @api.get("/meals")
 def get_meals(
     manager: CalorieManager = Depends(get_calorie_manager),
@@ -85,17 +90,23 @@ def get_total_nutritions(
         )
 
 
-@api.delete("/meals/{id}")
+@api.delete("/meals/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_meal(
     id: str,
-    response: Response,
     calorie_manager: CalorieManager = Depends(get_calorie_manager),
 ):
     try:
-        response.status_code = status.HTTP_200_OK
-        calorie_manager.delete_meal(id=id)
-    except Exception as e:
+        success = calorie_manager.delete_meal(id=id)
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Błąd podczas usuwania: {e}",
+            detail="Wystąpił wewnętrzny błąd serwera.",
         )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Posiłek o id {id} nie istnieje.",
+        )
+
+    return None
