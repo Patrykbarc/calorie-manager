@@ -4,11 +4,10 @@ from typing import cast
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 
-import models
-from calorie_manager import CalorieManager
-from constants.constants import MEALS_DATA_FILE_NAME
-from file_manager import FileManager
-from schemas import Meal
+import app.models as models
+from app.core import MEALS_DATA_FILE_NAME
+from app.schemas import Meal
+from app.services import CalorieManager, FileManager
 
 
 def get_calorie_manager(request: Request) -> CalorieManager:
@@ -30,10 +29,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+api = FastAPI(lifespan=lifespan)
 
 
-@app.get("/meals")
+@api.get("/meals")
 def get_meals(
     manager: CalorieManager = Depends(get_calorie_manager),
 ):
@@ -45,7 +44,7 @@ def get_meals(
         )
 
 
-@app.post("/meals")
+@api.post("/meals")
 def create_meal(
     meal: Meal,
     calorie_manager: CalorieManager = Depends(get_calorie_manager),
@@ -69,7 +68,7 @@ def create_meal(
         )
 
 
-@app.get("/meals/total-nutritions")
+@api.get("/meals/total-nutritions")
 def get_total_nutritions(
     calorie_manager: CalorieManager = Depends(get_calorie_manager),
 ):

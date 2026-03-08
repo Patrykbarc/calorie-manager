@@ -3,8 +3,8 @@ from typing import List
 
 import requests
 
-from models import Meal, NutritionFacts
-from settings_manager import SettingsManager
+from app.models import Meal, NutritionFacts
+from app.services import SettingsManager
 
 
 class CLI:

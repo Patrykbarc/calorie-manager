@@ -1,8 +1,9 @@
 import sys
 from dataclasses import asdict, dataclass
 
-from constants.constants import USER_SETTINGS_FILE_NAME
-from file_manager import FileManager
+from app.core import USER_SETTINGS_FILE_NAME
+
+from .file_manager import FileManager
 
 
 @dataclass

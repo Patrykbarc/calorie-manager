@@ -1,5 +1,8 @@
-server:
-	fastapi dev api.py
+PYTHON = python3
+API_PATH = app/api/api.py
 
-cli:
+server:
+	fastapi dev ${API_PATH}
+
+start:
 	python3 main.py

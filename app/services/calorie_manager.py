@@ -1,8 +1,9 @@
 from typing import List
 
-from constants.constants import MEALS_DATA_FILE_NAME
-from file_manager import FileManager
-from models import Meal, NutritionFacts
+from app.core import MEALS_DATA_FILE_NAME
+from app.models import Meal, NutritionFacts
+
+from .file_manager import FileManager
 
 
 class CalorieManager:
