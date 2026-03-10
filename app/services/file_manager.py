@@ -1,6 +1,7 @@
 import json
 from typing import Any, Final
 
+
 class FileManager:
     ENCODING_METHOD: Final = "utf-8"
 
