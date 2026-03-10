@@ -3,10 +3,9 @@ from datetime import datetime, timedelta
 from typing import List
 
 import requests
-from fastapi import status
-
 from app.models import Meal, NutritionFacts
 from app.services import SettingsManager
+from fastapi import status
 
 
 class CLI:
@@ -32,6 +31,7 @@ class CLI:
             print("5. Pokaż ustawienia")
             print("6. Edytuj ustawienia")
             print("7. Pokaż tygodniowe podsumowanie")
+            print("8. Zaktualizuj posiłek")
             print("\n9. Zamknij program")
 
             choice = input("\nWybierz opcję: ")
@@ -51,6 +51,8 @@ class CLI:
                     self._handle_update_settings()
                 case "7":
                     self._handle_weekly_summary()
+                case "8":
+                    self._handle_update_meal()
                 case "9":
                     print("Zamykanie programu...\n")
                     break
@@ -75,18 +77,7 @@ class CLI:
     def _get_timestamp(self) -> datetime:
         return datetime.now()
 
-    def _handle_user_settings(self) -> None:
-        user_settings = self.settings_manager.get_user_settings()
-
-        if user_settings is None:
-            self.settings_manager.run_user_settings_form()
-        else:
-            pass
-
-    def _handle_get_meal_list(self) -> List[Meal]:
-        return requests.get(f"{self.API_BASE_PATH}/meals").json()
-
-    def _handle_add_meal(self) -> None:
+    def _run_meal_prompt_form(self) -> Meal | None:
         print("(Zostaw pole puste i naciśnij Enter, aby anulować)\n")
 
         name = input("Nazwa posiłku: ").strip()
@@ -130,6 +121,25 @@ class CLI:
             "nutrition_facts": {"kcal": int(k), "protein": p, "fat": f, "carbs": c},
         }
 
+        return new_meal
+
+    def _handle_user_settings(self) -> None:
+        user_settings = self.settings_manager.get_user_settings()
+
+        if user_settings is None:
+            self.settings_manager.run_user_settings_form()
+        else:
+            pass
+
+    def _handle_get_meal_list(self) -> List[Meal]:
+        return requests.get(f"{self.API_BASE_PATH}/meals").json()
+
+    def _handle_add_meal(self) -> None:
+        new_meal = self._run_meal_prompt_form()
+
+        if new_meal is None:
+            return
+
         try:
             requests.post(f"{self.API_BASE_PATH}/meals", json=new_meal).json()
 
@@ -138,7 +148,6 @@ class CLI:
             print(f"Błąd podczas zapisywania danych: {e}")
 
     def _handle_delete_meal(self) -> None:
-
         while True:
             raw_meals_list = self._handle_get_meal_list()
 
@@ -166,7 +175,7 @@ class CLI:
 
                     res = requests.delete(f"{self.API_BASE_PATH}/meals/{meal_id}")
 
-                    if res.status_code == status.HTTP_200_OK:
+                    if res.status_code == status.HTTP_204_NO_CONTENT:
                         print(f"\nPomyślnie usunięto posiłek: {meal_to_delete['name']}")
                     else:
                         print("Wystąpił błąd serwera podczas usuwania.")
@@ -231,7 +240,7 @@ class CLI:
                 print(f"[{idx}] {meal['name']} ({nf['kcal']} kcal)")
             print(f"Suma: {total_kcal} kcal")
 
-    def _handle_show_user_settings(self):
+    def _handle_show_user_settings(self) -> None:
         user_settings = self.settings_manager.get_user_settings()
 
         if user_settings:
@@ -243,7 +252,7 @@ class CLI:
                 "\nBrak zapisanych ustawień. Skonfiguruj swój profil, aby zobaczyć szczegóły."
             )
 
-    def _handle_update_settings(self):
+    def _handle_update_settings(self) -> None:
         self.settings_manager.run_user_settings_form()
         user_settings = self.settings_manager.get_user_settings()
 
@@ -256,7 +265,7 @@ class CLI:
                 "\nNie udało się zaktualizować ustawień. Proces został przerwany lub wystąpił błąd zapisu."
             )
 
-    def _handle_weekly_summary(self):
+    def _handle_weekly_summary(self) -> None:
         meals: List[Meal] = self._handle_get_meal_list()
         raw_calories_daily = self.settings_manager.get_user_settings()
 
@@ -292,3 +301,49 @@ class CLI:
             print(
                 f"{date}  {is_calories_within_goal}  {data['kcal']} kcal  ({data['difference']})"
             )
+
+    def _handle_update_meal(self) -> None:
+        while True:
+            raw_meals_list = self._handle_get_meal_list()
+
+            if not raw_meals_list:
+                print("Brak posiłków do aktualizacji")
+                return
+
+            self._handle_show_meals()
+
+            choice = input(
+                '\nAby anulować naciśnij "Enter".'
+                "\nWpisz numer porządkowy do aktualizacji: "
+            ).strip()
+
+            if not choice:
+                print("Anulowano aktualizowanie posiłku")
+                return
+
+            try:
+                idx = int(choice) - 1
+
+                if 0 <= idx < len(raw_meals_list):
+                    meal_to_update = self._run_meal_prompt_form()
+
+                    if meal_to_update is None:
+                        return
+
+                    meal_id = raw_meals_list[idx].get("id")
+
+                    res = requests.put(
+                        f"{self.API_BASE_PATH}/meals/{meal_id}", json=meal_to_update
+                    )
+
+                    if res.status_code == status.HTTP_204_NO_CONTENT:
+                        print(
+                            f"\nPomyślnie zaktualizowano posiłek: {meal_to_update['name']}"
+                        )
+                        break
+                    else:
+                        print("Wystąpił błąd serwera podczas aktualizacji.")
+                else:
+                    print(f"Błąd: Wybierz numer z zakresu 1 - {len(raw_meals_list)}.")
+            except ValueError:
+                print("Błąd: To nie jest liczba. Podaj numer porządkowy (np. 1).")

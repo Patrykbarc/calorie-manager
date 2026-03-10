@@ -69,7 +69,6 @@ def create_meal(
     try:
         calorie_manager.add_meal(meal_dict)
         file_manager.save_to_file(MEALS_DATA_FILE_NAME, calorie_manager.get_meals())
-        return f'Posiłek "{meal.name}" został zapisany.\n'
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -97,6 +96,38 @@ def delete_meal(
 ):
     try:
         success = calorie_manager.delete_meal(id=id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Wystąpił wewnętrzny błąd serwera.",
+        )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Posiłek o id {id} nie istnieje.",
+        )
+
+    return None
+
+
+@api.put("/meals/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def update_meal(
+    id: str,
+    data: MealCreate,
+    calorie_manager: CalorieManager = Depends(get_calorie_manager),
+):
+    try:
+        meal_dict: models.Meal = {
+            "id": id,
+            "name": data.name,
+            "timestamp": datetime.now().isoformat(),
+            "nutrition_facts": cast(
+                models.NutritionFacts, data.nutrition_facts.model_dump()
+            ),
+        }
+
+        success = calorie_manager.update_meal(id=id, data=meal_dict)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

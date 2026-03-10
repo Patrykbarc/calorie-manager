@@ -42,3 +42,14 @@ class CalorieManager:
         self.file_manager.save_to_file(MEALS_DATA_FILE_NAME, self.meals)
 
         return meal
+
+    def update_meal(self, id: str, data: Meal) -> Meal | None:
+        meal = next((meal for meal in self.meals if meal.get("id") == id), None)
+
+        if not meal:
+            return None
+
+        self.meals = [data if meal.get("id") == id else meal for meal in self.meals]
+        self.file_manager.save_to_file(MEALS_DATA_FILE_NAME, self.meals)
+
+        return meal
